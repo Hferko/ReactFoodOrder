@@ -39,7 +39,7 @@ export default function Header() {
                 <a href="#title">
                     <Button textOnly={true} >
                         <p id='arrow'>&#8679;</p>
-                        <img src="cart.svg" alt="Kosár" />
+                        <img src={cart} alt="Kosár" />
                         <p>{osszKosarElem}</p>
                     </Button>
                 </a>
