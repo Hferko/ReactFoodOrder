@@ -15,18 +15,27 @@ const requestConfig = {
     }
 }
 
+const regName = /^[A-zéáőúűöüóíÉÁŐÚŰÖÜÓÍ ]+$/;
+const regSzam = /[0-9]+/;
+const regMail = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/;
+const regStreet = /^[A-zéáőúűöüóíÉÁŐÚŰÖÜÓÍ0-9 ./]+$/;
+const wrongName = (value) => (value.trim() === '' || !regName.test(value));
+const wrongNum = (value) => (value.trim() === '' || !regSzam.test(value));
+const wrongEmail = (value) => (value.trim() === '' || !regMail.test(value));
+const wrongStreet = (value) => (value.trim() === '' || !regStreet.test(value));
+
+let wrongData = '';
+
 export default function Cassa() {
-    const [hiba, setHiba] = useState();    
+    const [perfect, setPerfect] = useState();
+    const [hiba, setHiba] = useState('');
 
     const { data, loading: isSending, error, keresKuldese, clearData } =
         useHttp('https://httpreact-schwarz-default-rtdb.europe-west1.firebasedatabase.app/orders.json', requestConfig)
-        //useHttp('http://localhost:3000/orders', requestConfig)       
+    //useHttp('http://localhost:3000/orders', requestConfig)       
 
     const cartCtx = useContext(KosarContext);
     const userProgressCtx = useContext(ModalContext);
-
-    useEffect(() => {setHiba(error? true : false);}, [error]);
-    
 
     const cartTotal = cartCtx.items.reduce((totalPrice, item) =>
         totalPrice + item.price * item.quantity, 0);
@@ -41,11 +50,12 @@ export default function Cassa() {
         clearData();
     }
 
-    function errorInput() {       
+    function errorInput() {
         Array.from(document.querySelectorAll("input")).forEach(
             input => (input.value = "")
-          );    
-        setHiba(false);      
+        );
+        setHiba(wrongData);
+        wrongData = '';
         clearData();
     }
 
@@ -55,14 +65,29 @@ export default function Cassa() {
         const fd = new FormData(event.target);
         const customerData = Object.fromEntries(fd.entries());
 
-        keresKuldese(JSON.stringify({
-            order: {
-                items: cartCtx.items,
-                customer: customerData
-            }
-        }));        
+        console.log(customerData);
+
+        if (wrongName(customerData.name)) { wrongData = 'Nem megfelelő név.'; }
+        if (wrongEmail(customerData.email)) { wrongData = 'Helytelen Email cím.'; }
+        if (wrongStreet(customerData.street)) { wrongData = 'Nem megfelelő utca, házszám.'; }
+        if (wrongNum(customerData["postal-code"])) { wrongData = 'Helytelen irányítószám.'; }
+        if (wrongName(customerData.city)) { wrongData = 'Melyik városról is van szó?'; }
+
+        if (wrongData !== '') {
+            errorInput();
+            setPerfect(false);
+            return;
+        }
+        else {
+            keresKuldese(JSON.stringify({
+                order: {
+                    items: cartCtx.items,
+                    customer: customerData
+                }
+            }));
+        }
     }
-    
+
     let actions = (
         <>
             <Button textOnly={true} type="button" onClick={closeCartHandler}>Mégsem</Button>
@@ -74,7 +99,7 @@ export default function Cassa() {
         actions = <span>Rendelés adatainak küldése...</span>
     }
 
-    if (data && !hiba) {
+    if (data && !error) {
         return (
             <Modal open={userProgressCtx.progress === 'checkout'} onClose={finishHandler}>
                 <h2>Rendelése sikeresen továbbításra került</h2>
@@ -101,11 +126,11 @@ export default function Cassa() {
                     <Input label="Település" type="text" id="city" />
                 </div>
 
-                {hiba && <Error title="Sikertelen a rendelés leadása" message={error} close={errorInput}/>}
+                {!perfect && (<p style={{ color: 'red' }}>{hiba}</p>)}
+
+                {error && <Error title="Sikertelen a rendelés leadása" message={error} close={errorInput} />}
                 <p className="modal-actions">
                     {actions}
-                    {/* <Button textOnly={true} type="button" onClick={closeCartHandler}>Mégsem</Button>
-                    <Button>Rendelés leadása</Button> */}
                 </p>
 
             </form>

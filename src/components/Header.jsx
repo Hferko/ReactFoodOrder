@@ -4,6 +4,7 @@ import Button from './UI/Button';
 import mealImg from '../images/meals.jpg';
 import KosarContext from '../store/KosarContext';
 import Logo from '../images/logo.png';
+import cart from '../images/cart.svg';
 import ModalContext from '../store/modalContext';
 
 export default function Header() {
@@ -27,7 +28,7 @@ export default function Header() {
                 </div>
                 <nav>
                     <Button textOnly={true} onClick={showCartHandler}>
-                        <img src="cart.svg" alt="Kosár" /> &nbsp;Kosár tartalma: <span>{osszKosarElem}</span>
+                        <img src={cart} alt="Kosár" /> &nbsp;Kosár tartalma: <span>{osszKosarElem}</span>
                     </Button>
                 </nav>
             </header>
